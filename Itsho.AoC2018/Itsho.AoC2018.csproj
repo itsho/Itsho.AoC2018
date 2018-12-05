@@ -49,6 +49,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Infra\Extensions.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Solutions\Day01Solution.cs" />
@@ -61,7 +62,6 @@
     <Compile Include="Solutions\Day09Solution.cs" />
     <Compile Include="Solutions\Day08Solution.cs" />
     <Compile Include="Solutions\Day07Solution.cs" />
-    <Compile Include="Tests\Tester.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -69,41 +69,41 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
-    <Content Include="RiddleSources\Day10.txt">
+    <Content Include="Inputs\Day10.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="RiddleSources\Day09.txt">
+    <Content Include="Inputs\Day09.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="RiddleSources\Day08.txt">
+    <Content Include="Inputs\Day08.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="RiddleSources\Day07.txt">
+    <Content Include="Inputs\Day07.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="RiddleSources\Day06.txt">
+    <Content Include="Inputs\Day06.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="RiddleSources\Day05.txt">
+    <Content Include="Inputs\Day05.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="RiddleSources\Day04.txt">
+    <Content Include="Inputs\Day04.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="RiddleSources\Day03.txt">
+    <Content Include="Inputs\Day03.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="RiddleSources\Day02.txt">
+    <Content Include="Inputs\Day02.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="RiddleSources\Day01.txt">
+    <Content Include="Inputs\Day01.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="RiddleSources\Day11.txt" />
-    <Content Include="RiddleSources\Day12.txt" />
-    <Content Include="RiddleSources\Day13.txt" />
-    <Content Include="RiddleSources\Day14.txt" />
-    <Content Include="RiddleSources\Day15.txt" />
+    <Content Include="Inputs\Day11.txt" />
+    <Content Include="Inputs\Day12.txt" />
+    <Content Include="Inputs\Day13.txt" />
+    <Content Include="Inputs\Day14.txt" />
+    <Content Include="Inputs\Day15.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

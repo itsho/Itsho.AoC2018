@@ -6,259 +6,359 @@ using System.Text.RegularExpressions;
 
 namespace Itsho.AoC2018.Solutions
 {
-	public static class Day04Extentions
-	{
-		public static bool IsSleep(this DataRow dr, int minute)
-		{
-			var cell = dr[$@"{minute:D2}"];
+    public static class Day04Extensions
+    {
+        public static bool IsSleep(this DataRow dr, int minute)
+        {
+            var cell = dr[$@"{minute:D2}"];
 
-			if (cell.GetType() != typeof(System.DBNull) &&
-			    (char)cell == Day04Solution.SLEEP_TIME)
-			{
-				return true;
-			}
+            if (cell.GetType() != typeof(System.DBNull) &&
+                (char)cell == Day04Solution.SLEEP_TIME)
+            {
+                return true;
+            }
 
-			return false;
-		}
-	}
+            return false;
+        }
+    }
 
-	public class GuardSleepCounter
-	{
-		public int GuardId { get; set; }
-		public int MinuteId { get; set; }
-		public int Counter { get; set; }
-	}
+    public class GuardSleepCounter
+    {
+        public int GuardId { get; set; }
+        public int MinuteId { get; set; }
+        public int Counter { get; set; }
+    }
 
-	public static class Day04Solution
-	{
-		private const string COL_ROW_ID = "ROW_ID";
-		private const string COL_DATE = "EVENT_DATE";
-		private const string COL_GUARD_ID = "GUARD_ID";
-		public const char SLEEP_TIME = '#';
+    public static class Day04Solution
+    {
+        private const string COL_ROW_ID = "ROW_ID";
+        private const string COL_DATE = "EVENT_DATE";
+        private const string COL_GUARD_ID = "GUARD_ID";
+        internal const char SLEEP_TIME = '#';
 
-		public static DataTable PrepareInput(IList<string> sortedSource)
-		{
-			var dt = new DataTable();
+        #region Tests
 
-			dt.Columns.Add(COL_ROW_ID, typeof(int));
-			dt.Columns.Add(COL_DATE, typeof(string));
-			dt.Columns.Add(COL_GUARD_ID, typeof(int));
+        public static void TestDay04Part1()
+        {
+            var input = @"[1518-11-01 00:00] Guard #10 begins shift
+[1518-11-01 00:05] falls asleep
+[1518-11-01 00:25] wakes up
+[1518-11-01 00:30] falls asleep
+[1518-11-01 00:55] wakes up
+[1518-11-01 23:58] Guard #99 begins shift
+[1518-11-02 00:40] falls asleep
+[1518-11-02 00:50] wakes up
+[1518-11-03 00:05] Guard #10 begins shift
+[1518-11-03 00:24] falls asleep
+[1518-11-03 00:29] wakes up
+[1518-11-04 00:02] Guard #99 begins shift
+[1518-11-04 00:36] falls asleep
+[1518-11-04 00:46] wakes up
+[1518-11-05 00:03] Guard #99 begins shift
+[1518-11-05 00:45] falls asleep
+[1518-11-05 00:55] wakes up".Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries).ToList();
 
-			for (int i = 0; i < 60; i++)
-			{
-				dt.Columns.Add($@"{i:D2}", typeof(char));
-			}
+            input.Sort();
 
-			var lastGuard = -1;
+            var dt = PrepareInput(input);
 
-			foreach (var line in sortedSource)
-			{
-				// parse line
-				ParseLine(line, out string date, out string time, out string desc, out int? guardId);
+            var actual = GetPart1(dt);
 
-				// each "sleep" is measured in minutes
-				if (guardId != null)
-				{
-					lastGuard = guardId.Value;
-				}
-				else if (desc == "falls asleep")
-				{
-					var row = dt.Select($@"{COL_DATE}='{date}' AND {COL_GUARD_ID}={lastGuard}").FirstOrDefault();
+            NUnit.Framework.Assert.AreEqual(240, actual);
+        }
 
-					bool isNewRow = false;
-					if (row == null)
-					{
-						row = dt.NewRow();
-						row[COL_ROW_ID] = dt.Rows.Count;
-						isNewRow = true;
-					}
-					row[COL_DATE] = date;
-					row[COL_GUARD_ID] = lastGuard;
-					row[time.ToString().Substring(3, 2)] = SLEEP_TIME;
+        public static void TestDay04Part2()
+        {
+            {
+                var input = @"[1518-11-01 00:00] Guard #10 begins shift
+[1518-11-01 00:05] falls asleep
+[1518-11-01 00:25] wakes up
+[1518-11-01 00:30] falls asleep
+[1518-11-01 00:55] wakes up
+[1518-11-01 23:58] Guard #99 begins shift
+[1518-11-02 00:40] falls asleep
+[1518-11-02 00:50] wakes up
+[1518-11-03 00:05] Guard #10 begins shift
+[1518-11-03 00:24] falls asleep
+[1518-11-03 00:29] wakes up
+[1518-11-04 00:02] Guard #99 begins shift
+[1518-11-04 00:36] falls asleep
+[1518-11-04 00:46] wakes up
+[1518-11-05 00:03] Guard #99 begins shift
+[1518-11-05 00:45] falls asleep
+[1518-11-05 00:55] wakes up".Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries).ToList();
 
-					if (isNewRow)
-					{
-						dt.Rows.Add(row);
-					}
-				}
-				else if (desc == "wakes up")
-				{
-					// find row
-					var row = dt.Select($@"{COL_DATE}='{date}' AND {COL_GUARD_ID}={lastGuard}").FirstOrDefault();
+                input.Sort();
 
-					var timeStart = 0; //FindLastFallAsleep(row);
-					{
-						for (int i = 59; i >= 0; i--)
-						{
-							if (row.IsSleep(i))
-							{
-								timeStart = i;
-								break;
-							}
-						}
-					}
+                var dt = PrepareInput(input);
+                var actual = GetPart2(dt);
+                NUnit.Framework.Assert.AreEqual(4455, actual);
+            }
 
-					var timeEnd = Convert.ToInt32(time.ToString().Substring(3, 2));
+            {
+                var input = @"[1518-11-01 00:00] Guard #10 begins shift
+[1518-11-01 00:05] falls asleep
+[1518-11-01 00:25] wakes up
+[1518-11-01 00:30] falls asleep
+[1518-11-01 00:55] wakes up
+[1518-11-01 23:58] Guard #99 begins shift
+[1518-11-02 00:40] falls asleep
+[1518-11-02 00:50] wakes up
+[1518-11-03 00:05] Guard #10 begins shift
+[1518-11-03 00:24] falls asleep
+[1518-11-03 00:29] wakes up
+[1518-11-04 00:02] Guard #99 begins shift
+[1518-11-04 00:36] falls asleep
+[1518-11-04 00:46] wakes up
+[1518-11-05 00:03] Guard #99 begins shift
+[1518-11-05 00:45] falls asleep
+[1518-11-05 00:55] wakes up
+[1518-11-05 23:58] Guard #50 begins shift
+[1518-11-06 00:15] falls asleep
+[1518-11-06 00:16] wakes up
+[1518-11-06 23:58] Guard #50 begins shift
+[1518-11-07 00:15] falls asleep
+[1518-11-07 00:16] wakes up
+[1518-11-07 23:58] Guard #50 begins shift
+[1518-11-08 00:15] falls asleep
+[1518-11-08 00:16] wakes up
+[1518-11-08 23:58] Guard #50 begins shift
+[1518-11-09 00:15] falls asleep
+[1518-11-09 00:16] wakes up".Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries).ToList();
 
-					for (int i = timeStart; i < timeEnd; i++)
-					{
-						row[$@"{i:D2}"] = SLEEP_TIME;
-					}
-				}
-			}
+                input.Sort();
 
-			return dt;
-		}
+                var dt = PrepareInput(input);
+                var actual = GetPart2(dt);
+                NUnit.Framework.Assert.AreEqual(50 * 15, actual);
+            }
+        }
 
-		public static int GetPart1(DataTable eventsTable)
-		{
-			// find guard with most minutes asleep
-			var mostAsleepDict = GetMostAsleep(eventsTable);
+        #endregion Tests
 
-			var guardMostAsleep = (from kvp in mostAsleepDict
-				where kvp.Value == mostAsleepDict.Max(e => e.Value)
-				select kvp.Key).FirstOrDefault();
+        public static DataTable PrepareInput(IList<string> sortedSource)
+        {
+            var dt = new DataTable();
 
-			// most probable asleep in minute
-			var firstMinuteAsleep = GetFirstMinuteAsleep(eventsTable, guardMostAsleep);
+            dt.Columns.Add(COL_ROW_ID, typeof(int));
+            dt.Columns.Add(COL_DATE, typeof(string));
+            dt.Columns.Add(COL_GUARD_ID, typeof(int));
 
-			return guardMostAsleep*firstMinuteAsleep;
-		}
+            for (int i = 0; i < 60; i++)
+            {
+                dt.Columns.Add($@"{i:D2}", typeof(char));
+            }
 
-		public static int GetPart2(DataTable riddleSource)
-		{
-			// minute most asleep
-			GetMinuteMostAsleep(riddleSource, out var mostSleptMinute, out var guardIdWithMostSleptMinute);
+            var lastGuard = -1;
 
-			return mostSleptMinute * guardIdWithMostSleptMinute;
-		}
+            foreach (var line in sortedSource)
+            {
+                // parse line
+                ParseLine(line, out string date, out string time, out string desc, out int? guardId);
 
-		private static int GetFirstMinuteAsleep(DataTable eventsTable, int guardMostAsleep)
-		{
-			var guardRows = eventsTable.Select($@"{COL_GUARD_ID}={guardMostAsleep}");
+                // each "sleep" is measured in minutes
+                if (guardId != null)
+                {
+                    lastGuard = guardId.Value;
+                }
+                else if (desc == "falls asleep")
+                {
+                    var row = dt.Select($@"{COL_DATE}='{date}' AND {COL_GUARD_ID}={lastGuard}").FirstOrDefault();
 
-			// key = minute,
-			// value = total sleep during all days
-			var dictMinutes = new Dictionary<int, int>();
-			for (int i = 0; i <= 59; i++)
-			{
-				foreach (DataRow guardRow in guardRows)
-				{
-					if (guardRow.IsSleep(i))
-					{
-						if (dictMinutes.ContainsKey(i))
-						{
-							dictMinutes[i]++;
-						}
-						else
-						{
-							dictMinutes.Add(i, 1);
-						}
-					}
-				}
-			}
+                    bool isNewRow = false;
+                    if (row == null)
+                    {
+                        row = dt.NewRow();
+                        row[COL_ROW_ID] = dt.Rows.Count;
+                        isNewRow = true;
+                    }
+                    row[COL_DATE] = date;
+                    row[COL_GUARD_ID] = lastGuard;
+                    row[time.ToString().Substring(3, 2)] = SLEEP_TIME;
 
-			var maxSleep = dictMinutes.Max(kvp => kvp.Value);
+                    if (isNewRow)
+                    {
+                        dt.Rows.Add(row);
+                    }
+                }
+                else if (desc == "wakes up")
+                {
+                    // find row
+                    var row = dt.Select($@"{COL_DATE}='{date}' AND {COL_GUARD_ID}={lastGuard}").FirstOrDefault();
 
-			return dictMinutes.FirstOrDefault(kvp => kvp.Value == maxSleep).Key;
-		}
+                    var timeStart = 0; //FindLastFallAsleep(row);
+                    {
+                        for (int i = 59; i >= 0; i--)
+                        {
+                            if (row.IsSleep(i))
+                            {
+                                timeStart = i;
+                                break;
+                            }
+                        }
+                    }
 
-		private static Dictionary<int,int> GetMostAsleep(DataTable eventsTable)
-		{
-			// key = guardId,
-			// value = total minutes asleep
-			var mostAsleepDict = new Dictionary<int,int>();
+                    var timeEnd = Convert.ToInt32(time.ToString().Substring(3, 2));
 
-			foreach (DataRow singleEvent in eventsTable.Rows)
-			{
-				var guardId = (int)singleEvent[COL_GUARD_ID];
-				var totalSleepMinutes = 0;
-				for (int i = 0; i <= 59; i++)
-				{
-					if (singleEvent.IsSleep(i))
-					{
-						totalSleepMinutes++;
-					}
-				}
+                    for (int i = timeStart; i < timeEnd; i++)
+                    {
+                        row[$@"{i:D2}"] = SLEEP_TIME;
+                    }
+                }
+            }
 
-				if (mostAsleepDict.ContainsKey(guardId))
-				{
-					mostAsleepDict[guardId] += totalSleepMinutes;
-				}
-				else
-				{
-					mostAsleepDict.Add(guardId,totalSleepMinutes);
-				}
-			}
+            return dt;
+        }
 
-			return mostAsleepDict;
-		}
+        public static int GetPart1(DataTable eventsTable)
+        {
+            // find guard with most minutes asleep
+            var mostAsleepDict = GetMostAsleep(eventsTable);
 
-		private static void ParseLine(string line, out string date, out string time, out string desc, out int? guardId)
-		{
-			var reg = new Regex(@"\[\d*?-(?'Date'\d*-\d*) (?'time'\d*:\d*)] (?'desc'.*#(?'GuardID'\d*).*|.*)");
-			var match = reg.Matches(line)[0];
-			date = match.Groups["Date"].Value;
-			time = match.Groups["time"].Value;
+            var guardMostAsleep = (from kvp in mostAsleepDict
+                                   where kvp.Value == mostAsleepDict.Max(e => e.Value)
+                                   select kvp.Key).FirstOrDefault();
 
-			guardId = null;
-			if (!string.IsNullOrEmpty(match.Groups["GuardID"].Value))
-			{
-				guardId = Convert.ToInt32(match.Groups["GuardID"].Value);
-			}
+            // most probable asleep in minute
+            var firstMinuteAsleep = GetFirstMinuteAsleep(eventsTable, guardMostAsleep);
 
-			desc = match.Groups["desc"].Value;
-		}
+            return guardMostAsleep * firstMinuteAsleep;
+        }
 
-		private static void GetMinuteMostAsleep(DataTable eventRows, out int mostSleptMinute, out int guardIdWithMostSleptMinute)
-		{
-			// get list of guards
-			var lstGuards = (from eventRow in eventRows.AsEnumerable()
-							 select eventRow.Field<int>(COL_GUARD_ID)).Distinct();
+        public static int GetPart2(DataTable input)
+        {
+            // minute most asleep
+            GetMinuteMostAsleep(input, out var mostSleptMinute, out var guardIdWithMostSleptMinute);
 
-			// key = guardid
-			// value = minute which the guard is sleep (mostly)
-			var dictGuardMinuteMostSleep = new List<GuardSleepCounter>();
+            return mostSleptMinute * guardIdWithMostSleptMinute;
+        }
 
-			foreach (var guardId in lstGuards)
-			{
-				// get list of guard event
-				var guardEvents = eventRows.Select($"{COL_GUARD_ID}='{guardId}'");
+        private static int GetFirstMinuteAsleep(DataTable eventsTable, int guardMostAsleep)
+        {
+            var guardRows = eventsTable.Select($@"{COL_GUARD_ID}={guardMostAsleep}");
 
-				// key = minute,
-				// value = total sleep during all days
-				var dictMinutes = new Dictionary<int, int>();
-				for (int i = 0; i <= 59; i++)
-				{
-					foreach (DataRow eventRow in guardEvents)
-					{
-						if (!eventRow.IsSleep(i)) continue;
-						if (dictMinutes.ContainsKey(i))
-						{
-							dictMinutes[i]++;
-						}
-						else
-						{
-							dictMinutes.Add(i, 1);
-						}
-					}
-				}
-				var maxSleepMinutes = dictMinutes.Max(kvp => kvp.Value);
-				var minuteOfSleep = dictMinutes.FirstOrDefault(kvp => kvp.Value == maxSleepMinutes).Key;
+            // key = minute,
+            // value = total sleep during all days
+            var dictMinutes = new Dictionary<int, int>();
+            for (int i = 0; i <= 59; i++)
+            {
+                foreach (DataRow guardRow in guardRows)
+                {
+                    if (guardRow.IsSleep(i))
+                    {
+                        if (dictMinutes.ContainsKey(i))
+                        {
+                            dictMinutes[i]++;
+                        }
+                        else
+                        {
+                            dictMinutes.Add(i, 1);
+                        }
+                    }
+                }
+            }
 
-				dictGuardMinuteMostSleep.Add(new GuardSleepCounter()
-				{
-					GuardId = guardId,
-					MinuteId = minuteOfSleep,
-					Counter = maxSleepMinutes
-				});
-			}
+            var maxSleep = dictMinutes.Max(kvp => kvp.Value);
 
-			var maxCounter = dictGuardMinuteMostSleep.Max(i => i.Counter);
-			var foundGuard = dictGuardMinuteMostSleep.FirstOrDefault(i => i.Counter== maxCounter);
+            return dictMinutes.FirstOrDefault(kvp => kvp.Value == maxSleep).Key;
+        }
 
-			mostSleptMinute = foundGuard.MinuteId;
-			guardIdWithMostSleptMinute = foundGuard.GuardId;
-		}
-	}
+        private static Dictionary<int, int> GetMostAsleep(DataTable eventsTable)
+        {
+            // key = guardId,
+            // value = total minutes asleep
+            var mostAsleepDict = new Dictionary<int, int>();
+
+            foreach (DataRow singleEvent in eventsTable.Rows)
+            {
+                var guardId = (int)singleEvent[COL_GUARD_ID];
+                var totalSleepMinutes = 0;
+                for (int i = 0; i <= 59; i++)
+                {
+                    if (singleEvent.IsSleep(i))
+                    {
+                        totalSleepMinutes++;
+                    }
+                }
+
+                if (mostAsleepDict.ContainsKey(guardId))
+                {
+                    mostAsleepDict[guardId] += totalSleepMinutes;
+                }
+                else
+                {
+                    mostAsleepDict.Add(guardId, totalSleepMinutes);
+                }
+            }
+
+            return mostAsleepDict;
+        }
+
+        private static void ParseLine(string line, out string date, out string time, out string desc, out int? guardId)
+        {
+            var reg = new Regex(@"\[\d*?-(?'Date'\d*-\d*) (?'time'\d*:\d*)] (?'desc'.*#(?'GuardID'\d*).*|.*)");
+            var match = reg.Matches(line)[0];
+            date = match.Groups["Date"].Value;
+            time = match.Groups["time"].Value;
+
+            guardId = null;
+            if (!string.IsNullOrEmpty(match.Groups["GuardID"].Value))
+            {
+                guardId = Convert.ToInt32(match.Groups["GuardID"].Value);
+            }
+
+            desc = match.Groups["desc"].Value;
+        }
+
+        private static void GetMinuteMostAsleep(DataTable eventRows, out int mostSleptMinute, out int guardIdWithMostSleptMinute)
+        {
+            // get list of guards
+            var lstGuards = (from eventRow in eventRows.AsEnumerable()
+                             select eventRow.Field<int>(COL_GUARD_ID)).Distinct();
+
+            // key = guardid
+            // value = minute which the guard is sleep (mostly)
+            var dictGuardMinuteMostSleep = new List<GuardSleepCounter>();
+
+            foreach (var guardId in lstGuards)
+            {
+                // get list of guard event
+                var guardEvents = eventRows.Select($"{COL_GUARD_ID}='{guardId}'");
+
+                // key = minute,
+                // value = total sleep during all days
+                var dictMinutes = new Dictionary<int, int>();
+                for (int i = 0; i <= 59; i++)
+                {
+                    foreach (DataRow eventRow in guardEvents)
+                    {
+                        if (!eventRow.IsSleep(i)) continue;
+                        if (dictMinutes.ContainsKey(i))
+                        {
+                            dictMinutes[i]++;
+                        }
+                        else
+                        {
+                            dictMinutes.Add(i, 1);
+                        }
+                    }
+                }
+                var maxSleepMinutes = dictMinutes.Max(kvp => kvp.Value);
+                var minuteOfSleep = dictMinutes.FirstOrDefault(kvp => kvp.Value == maxSleepMinutes).Key;
+
+                dictGuardMinuteMostSleep.Add(new GuardSleepCounter()
+                {
+                    GuardId = guardId,
+                    MinuteId = minuteOfSleep,
+                    Counter = maxSleepMinutes
+                });
+            }
+
+            var maxCounter = dictGuardMinuteMostSleep.Max(i => i.Counter);
+            var foundGuard = dictGuardMinuteMostSleep.FirstOrDefault(i => i.Counter == maxCounter);
+
+            mostSleptMinute = foundGuard.MinuteId;
+            guardIdWithMostSleptMinute = foundGuard.GuardId;
+        }
+    }
 }

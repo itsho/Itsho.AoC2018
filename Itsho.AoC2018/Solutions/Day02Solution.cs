@@ -1,101 +1,139 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Itsho.AoC2018.Solutions
 {
-	public static class Day02Solution
-	{
-		public static int GetPart1(string[] riddleSource)
-		{
-			var twicers = 0;
-			var thricers = 0;
+    public static class Day02Solution
+    {
+        #region Tests
 
-			foreach (var riddleLine in riddleSource)
-			{
-				var countLetters = CountLetters(riddleLine);
+        public static void TestDay02Part1()
+        {
+            //	"abcdef"
+            //	"bababc"	2a, 3b (both)
+            //	"abbcde"	2b
+            //	"abcccd"	     3c
+            //	"aabcdd"	2a2d     (count ONE)
+            //	"abcdee"	2e
+            //	"ababab"	    3a3b (count one)
+            var testInput = @"abcdef bababc abbcde abcccd aabcdd abcdee ababab";
 
-				var innerTwicers = countLetters.Count(kvp => kvp.Value == 2);
-				var innerThricers = countLetters.Count(kvp => kvp.Value == 3);
+            NUnit.Framework.Assert.AreEqual(2, CountLetters("bababc")['a']);
+            NUnit.Framework.Assert.AreEqual(3, CountLetters("bababc")['b']);
+            NUnit.Framework.Assert.AreEqual(3, CountLetters("ababab")['a']);
+            NUnit.Framework.Assert.AreEqual(3, CountLetters("ababab")['b']);
 
-				if (innerTwicers >= 1)
-				{
-					twicers++;
-				}
-				if (innerThricers >= 1)
-				{
-					thricers++;
-				}
-			}
+            NUnit.Framework.Assert.AreEqual(12, GetPart1(testInput.Split(' ')));
+        }
 
-			return twicers*thricers;
-		}
+        public static void TestDay02Part2()
+        {
+            {
+                var boxTest = @"abcde fghij klmno pqrst fguij axcye wvxyz";
+                NUnit.Framework.Assert.AreEqual("fgij", GetPart2(boxTest.Split(' ')));
+            }
 
-		public static Dictionary<char, int> CountLetters(string riddleLine)
-		{
-			var dictCounter = new Dictionary<char, int>();
-			foreach (var chr in riddleLine)
-			{
-				if (dictCounter.ContainsKey(chr))
-				{
-					dictCounter[chr]++;
-				}
-				else
-				{
-					dictCounter.Add(chr,1);
-				}
-			}
+            {
+                var boxTest = @"aaaaaaaaaaaaaaaa
+aaaaaaa1aeaaaaab
+aaaaaaa2aeaaaaac
+aaaaaaa3aeaaaaad
+aaaaaaa4aeaaaaae
+aaaaaaa4aeaaaaaf".Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                NUnit.Framework.Assert.AreEqual("aaaaaaa4aeaaaaa", GetPart2(boxTest));
+            }
+        }
 
-			return dictCounter;
-		}
+        #endregion Tests
 
-		public static string GetPart2(string[] riddleSource)
-		{
-			var lstInput = riddleSource.ToList();
-			lstInput.Sort();
+        public static int GetPart1(string[] input)
+        {
+            var twicers = 0;
+            var thricers = 0;
 
-			for (int i = 1; i < lstInput.Count; i++)
-			{
-				var line = lstInput[i];
+            foreach (var riddleLine in input)
+            {
+                var countLetters = CountLetters(riddleLine);
 
-				var diffCharIndex = GetDiffChar(line, lstInput[i - 1]);
-				if (diffCharIndex != null)
-				{
-					// remove this char and return the line
-					var result = line.ToList();
-					result.RemoveAt(diffCharIndex.Value);
-					return new string(result.ToArray());
-				}
-				
-			}
+                var innerTwicers = countLetters.Count(kvp => kvp.Value == 2);
+                var innerThricers = countLetters.Count(kvp => kvp.Value == 3);
 
-			return null;
+                if (innerTwicers >= 1)
+                {
+                    twicers++;
+                }
+                if (innerThricers >= 1)
+                {
+                    thricers++;
+                }
+            }
 
-		}
+            return twicers * thricers;
+        }
 
-		private static int? GetDiffChar(string line1, string line2)
-		{
-			int? foundChar = null;
-			for (int chrIndex = 0; chrIndex < line1.Length; chrIndex++)
-			{
-				// if chars are the same
-				if (line1[chrIndex] == line2[chrIndex])
-				{
-					continue;
-				}
+        public static string GetPart2(string[] input)
+        {
+            var lstInput = input.ToList();
+            lstInput.Sort();
 
-				// if this is the SECOND mismatch
-				if (foundChar != null)
-				{
-					// we found more than one mis-match
-					return null;
-				}
+            for (int i = 1; i < lstInput.Count; i++)
+            {
+                var line = lstInput[i];
 
-				foundChar = chrIndex;
+                var diffCharIndex = GetDiffChar(line, lstInput[i - 1]);
+                if (diffCharIndex != null)
+                {
+                    // remove this char and return the line
+                    var result = line.ToList();
+                    result.RemoveAt(diffCharIndex.Value);
+                    return new string(result.ToArray());
+                }
+            }
 
-			}
+            return null;
+        }
 
+        public static Dictionary<char, int> CountLetters(string riddleLine)
+        {
+            var dictCounter = new Dictionary<char, int>();
+            foreach (var chr in riddleLine)
+            {
+                if (dictCounter.ContainsKey(chr))
+                {
+                    dictCounter[chr]++;
+                }
+                else
+                {
+                    dictCounter.Add(chr, 1);
+                }
+            }
 
-			return foundChar;
-		}
-	}
+            return dictCounter;
+        }
+
+        private static int? GetDiffChar(string line1, string line2)
+        {
+            int? foundChar = null;
+            for (int chrIndex = 0; chrIndex < line1.Length; chrIndex++)
+            {
+                // if chars are the same
+                if (line1[chrIndex] == line2[chrIndex])
+                {
+                    continue;
+                }
+
+                // if this is the SECOND mismatch
+                if (foundChar != null)
+                {
+                    // we found more than one mis-match
+                    return null;
+                }
+
+                foundChar = chrIndex;
+            }
+
+            return foundChar;
+        }
+    }
 }
